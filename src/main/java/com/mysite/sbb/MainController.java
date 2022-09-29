@@ -1,14 +1,26 @@
 package com.mysite.sbb;
 
+import com.mysite.sbb.question.dao.QuestionRepository;
+import com.mysite.sbb.question.domain.Question;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Controller
 public class MainController {
+
+    @Autowired
+    private QuestionRepository questionRepository;
 
     int increaseNum = -1;
 
@@ -17,6 +29,24 @@ public class MainController {
     public String index() {
         System.out.println("sbb");
         return "sbb";
+    }
+
+    @GetMapping("/createQuestion")
+    @ResponseBody
+    public List<Question> createQuestion() {
+        Question q1 = new Question();
+        q1.setSubject("sbb가 무엇인가요?");
+        q1.setContent("sbb에 대해서 알고 싶습니다.");
+        q1.setCreateDate(LocalDateTime.now());
+        this.questionRepository.save(q1);  // 첫번째 질문 저장
+
+        Question q2 = new Question();
+        q2.setSubject("스프링부트 모델 질문입니다.");
+        q2.setContent("id는 자동으로 생성되나요?");
+        q2.setCreateDate(LocalDateTime.now());
+        this.questionRepository.save(q2);  // 두번째 질문 저장
+
+        return questionRepository.findAll();
     }
 
     @GetMapping("/page1")
@@ -104,4 +134,38 @@ public class MainController {
 
     }
 
+    @GetMapping("/saveSessionAge")
+    @ResponseBody
+    public String saveSession(@RequestParam(value = "age", defaultValue = "0") int age, HttpSession session) {
+        System.out.println("age: " + age);
+        session.setAttribute("age", age);
+        return "나이 %d이 세션에 저장되었습니다.".formatted(age);
+    }
+
+    @GetMapping("/getSessionAge")
+    @ResponseBody
+    public String saveSession(HttpSession session, HttpServletResponse res) {
+        int age = (int) session.getAttribute("age");
+        Cookie cookie = new Cookie("age", String.valueOf(age));
+        res.addCookie(cookie);
+
+        return "세션에 저장된 나이는 %d입니다.".formatted(age);
+    }
+
+    @GetMapping("/addPerson/{id}")
+    @ResponseBody
+    public Person addPerson(Person person) {
+        return person;
+    }
+
+}
+
+@Getter
+@AllArgsConstructor
+class Person {
+    private int id;
+
+    private int age;
+
+    private String name;
 }
